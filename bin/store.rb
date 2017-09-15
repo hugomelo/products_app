@@ -1,9 +1,25 @@
 #!/bin/env ruby
 
-require File.dirname(__FILE__) + '/../models/product'
+require_relative '../config/environment'
 
-product = Product.new 'Banana', 1.4
+if Product.count == 0
+  Product.create! [
+    {name: 'Banana', price: 1.4},
+    {name: 'Apple',  price: 2.0},
+    {name: 'Mango',  price: 3}
+  ]
+end
 
-product.print_name
+# === Assignment 1 ===
 
-product.print_price
+puts "-"*30
+Product.first.print_name
+Product.first.print_price
+
+# === Assignment 2 ====
+
+# Products' price sum
+Product.print_products_sum
+
+Product.print_cheapest_product
+Product.print_most_expensive_product
