@@ -1,3 +1,4 @@
 *swp
 *swo
 db/store.sqlite3
+db/store_test.sqlite3
