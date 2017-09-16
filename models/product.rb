@@ -39,16 +39,19 @@ class Product < ActiveRecord::Base
   def price= price
     super(price)
     self.adjust_price_with_vat
+    price
   end
 
   def output_vat= vat
     super(vat)
     self.adjust_price_with_vat
+    vat
   end
 
   def input_vat= vat
     super(vat)
     self.adjust_price_with_vat
+    vat
   end
 
   def self.prices_sum products = nil
