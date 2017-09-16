@@ -12,6 +12,7 @@ class Product < ActiveRecord::Base
   validates_numericality_of :price,      greater_than_or_equal_to: 0
   validates_numericality_of :input_vat,  greater_than_or_equal_to: 0
   validates_numericality_of :output_vat, greater_than_or_equal_to: 0
+  validate :has_proper_vat
 
   ### Scopes
   scope :cheapest,                -> { order("price ASC" )         .limit(1).first }
@@ -104,6 +105,12 @@ class Product < ActiveRecord::Base
   protected
   def adjust_price_with_vat
     self.price_with_vat = ((1 + output_vat/100)*price - input_vat).round(2)
+  end
+
+  def has_proper_vat
+    if (self.output_vat / 100 * self.price - self.input_vat) < 0
+      errors.add(:output_vat, "Output VAT cannot produce a negative tax")
+    end
   end
 
 end
