@@ -7,8 +7,8 @@ class ProductTest < Test::Unit::TestCase
     setup_database
     Product.create! [
       {name: "banana", price: 45.11, output_vat: 10, input_vat: 2},
-      {name: "papaya", price: 10   , output_vat: 20, input_vat: 1},
-      {name: "apple",  price: 14.1 , output_vat: 1, input_vat: 10},
+      {name: "papaya", price: 10   , output_vat: 60, input_vat: 1},
+      {name: "apple",  price: 14.1 , output_vat: 10, input_vat: 1},
       {name: "mango",  price: 20   , output_vat: 300,  input_vat: 2}
     ]
   end
@@ -49,7 +49,7 @@ class ProductTest < Test::Unit::TestCase
   end
 
   test 'it should calc the sum of all products with VAT' do
-    total = Product.all.inject(0) {|total,p| total += p.price * (1 + p.output_vat/100) - p.input_vat }.round(2)
+    total = Product.all.inject(0) {|sum,p| sum += p.price * (1 + p.output_vat/100) - p.input_vat }.round(2)
     assert_equal total, Product.prices_sum_with_vat.to_f
     assert_equal total, Product.prices_sum_with_vat(Product.all).to_f
   end
@@ -64,5 +64,41 @@ class ProductTest < Test::Unit::TestCase
     assert_equal "mango", Product.all.most_expensive_with_vat.name
   end
 
+  ### Sub Product
 
+  test 'it should not accept a parent equal to child' do
+    product = Product.first
+    product.parent_id = product.id
+    refute product.valid?
+  end
+
+  test 'it detects circular parenting' do
+    Product.all.each_with_index do |product, index|
+      next if index == 0
+      product.update parent_id: Product.all[index - 1].id
+    end
+    product = Product.first
+    product.parent_id = Product.all[-1].id
+
+    refute product.valid?
+  end
+
+  test 'it should update price when new children are created' do
+    product = Product.create! name: "bundle 1", price: 100, output_vat: 0, input_vat: 0
+
+    other_products = Product.where("id != ?", product.id)
+    other_products.each {|p| p.update parent_id: product.id }
+    assert_equal other_products.sum(:price), product.reload.price
+
+  end
+
+  test 'it should update price_with_vat when new children are created' do
+    product = Product.create! name: "bundle 1", price: 100, output_vat: 0, input_vat: 0
+    price_with_vat = product.price_with_vat
+
+    other_products = Product.where("id != ?", product.id)
+    other_products.each {|p| p.update parent_id: product.id }
+    assert_equal other_products.sum(:price_with_vat), product.reload.price_with_vat
+    assert_not_equal price_with_vat, product.price_with_vat
+  end
 end

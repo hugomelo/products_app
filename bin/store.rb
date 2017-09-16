@@ -23,3 +23,12 @@ Product.print_products_sum
 
 Product.print_cheapest_product
 Product.print_most_expensive_product
+
+# === Assignment 3 ====
+Product.first.print_price_with_vat
+
+# === Assignment 4 ====
+
+product = Product.create name: "bundle 1", price: 100
+product.products = Product.first(3)
+Product.print_products_tree product
