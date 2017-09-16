@@ -7,11 +7,16 @@ class Product < ActiveRecord::Base
   # fix it to support only $
   CURRENCY = '$'
 
+  ### Associations
+  belongs_to :parent, class_name: "Product"
+  has_many   :products, class_name: "Product", foreign_key: :parent_id
+
   ### Validations
   validates :name, presence: true
   validates_numericality_of :price,      greater_than_or_equal_to: 0
   validates_numericality_of :input_vat,  greater_than_or_equal_to: 0
   validates_numericality_of :output_vat, greater_than_or_equal_to: 0
+  validate :has_other_parent
 
   ### Scopes
   scope :cheapest,                -> { order("price ASC" )         .limit(1).first }
@@ -104,6 +109,9 @@ class Product < ActiveRecord::Base
   protected
   def adjust_price_with_vat
     self.price_with_vat = ((1 + output_vat/100)*price - input_vat).round(2)
+  end
+  def has_other_parent
+    errors.add(:parent_id, "parent id cannot be same as child's.")
   end
 
 end
