@@ -143,6 +143,11 @@ class Product < ActiveRecord::Base
     self.update price: Product.prices_sum(self.products)
   end
 
+  # Check if the parent is same as self or if (parent->parent == self) recursivelly
+  def is_circular_parent? id
+    self.parent_id.present? && ( self.parent_id == id || self.parent.is_circular_parent?(id))
+  end
+
   protected
   def adjust_price_with_vat
     self.price_with_vat =
@@ -160,7 +165,7 @@ class Product < ActiveRecord::Base
   end
 
   def has_other_parent
-    errors.add(:parent_id, "parent id cannot be same as child's.") if self.parent_id.present? && self.parent_id == self.id
+    errors.add(:parent_id, "parent id cannot be same as child's.") if is_circular_parent? self.id
   end
 
   def update_parent
