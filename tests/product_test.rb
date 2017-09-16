@@ -7,8 +7,8 @@ class ProductTest < Test::Unit::TestCase
     setup_database
     Product.create! [
       {name: "banana", price: 45.11, output_vat: 10, input_vat: 2},
-      {name: "papaya", price: 10   , output_vat: 20, input_vat: 1},
-      {name: "apple",  price: 14.1 , output_vat: 1, input_vat: 10},
+      {name: "papaya", price: 10   , output_vat: 60, input_vat: 1},
+      {name: "apple",  price: 14.1 , output_vat: 10, input_vat: 1},
       {name: "mango",  price: 20   , output_vat: 300,  input_vat: 2}
     ]
   end
@@ -49,7 +49,7 @@ class ProductTest < Test::Unit::TestCase
   end
 
   test 'it should calc the sum of all products with VAT' do
-    total = Product.all.inject(0) {|total,p| total += p.price * (1 + p.output_vat/100) - p.input_vat }.round(2)
+    total = Product.all.inject(0) {|sum,p| sum += p.price * (1 + p.output_vat/100) - p.input_vat }.round(2)
     assert_equal total, Product.prices_sum_with_vat.to_f
     assert_equal total, Product.prices_sum_with_vat(Product.all).to_f
   end
@@ -63,6 +63,5 @@ class ProductTest < Test::Unit::TestCase
     assert_equal "mango", Product.most_expensive_with_vat.name
     assert_equal "mango", Product.all.most_expensive_with_vat.name
   end
-
 
 end
