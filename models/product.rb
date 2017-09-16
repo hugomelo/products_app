@@ -119,7 +119,7 @@ class Product < ActiveRecord::Base
   end
 
   def has_other_parent
-    errors.add(:parent_id, "parent id cannot be same as child's.") if self.parent_id == self.id
+    errors.add(:parent_id, "parent id cannot be same as child's.") if self.parent_id.present? && self.parent_id == self.id
   end
 
 end

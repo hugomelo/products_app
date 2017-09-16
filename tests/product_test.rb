@@ -64,4 +64,13 @@ class ProductTest < Test::Unit::TestCase
     assert_equal "mango", Product.all.most_expensive_with_vat.name
   end
 
+  ### Sub Product
+
+  test 'it should not accept a parent equal to child' do
+    product = Product.first
+    product.parent_id = product.id
+    refute product.valid?
+  end
+
+
 end
