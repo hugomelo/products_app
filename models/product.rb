@@ -117,6 +117,22 @@ class Product < ActiveRecord::Base
     self.print_by_price_ordering :most_expensive
   end
 
+  # Print product tree of sub products
+  # Calculate the remaining space substracting the column text size
+  def self.print_products_tree product, tab=0
+    puts "| Displaying tree for Product #{product.name} |" if tab == 0
+    start_spaces = ' ' * 5 * tab
+    name_spaces = ' ' * (40 - product.name.size-(2*tab))
+    price_spaces = ' ' * (10 - product.price.to_s.size)
+    pvat_spaces = ' ' * (10 - product.price_with_vat.to_s.size)
+
+    print "#{start_spaces}\\--> | #{product.name}#{name_spaces}| #{product.price}#{price_spaces}| #{product.price_with_vat}#{pvat_spaces}|\n"
+    product.products.each do |child|
+      self.print_products_tree child, tab+1
+    end
+    puts "" if tab == 0
+  end
+
   def has_parent?
     self.parent_id.present?
   end
