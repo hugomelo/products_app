@@ -72,5 +72,23 @@ class ProductTest < Test::Unit::TestCase
     refute product.valid?
   end
 
+  test 'it should update price when new children are created' do
+    product = Product.create! name: "bundle 1", price: 100, output_vat: 0, input_vat: 0
 
+    other_products = Product.where("id != ?", product.id)
+    other_products.each {|p| p.update parent_id: product.id }
+    assert_equal other_products.sum(:price), product.reload.price
+
+  end
+
+  test 'it should update price_with_vat when new children are created' do
+    product = Product.create! name: "bundle 1", price: 100, output_vat: 0, input_vat: 0
+    price_with_vat = product.price_with_vat
+
+    other_products = Product.where("id != ?", product.id)
+    other_products.each {|p| p.update parent_id: product.id }
+    assert_equal other_products.sum(:price_with_vat), product.reload.price_with_vat
+    assert_not_equal price_with_vat, product.price_with_vat
+
+  end
 end

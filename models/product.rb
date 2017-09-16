@@ -4,7 +4,7 @@
 # Also, supports VAT fixed input and percentange output
 #
 class Product < ActiveRecord::Base
-  # fix it to support only $
+  # By now, supports only $
   CURRENCY = '$'
 
   ### Associations
@@ -25,6 +25,9 @@ class Product < ActiveRecord::Base
   scope :cheapest_with_vat,       -> { order("price_with_vat ASC" ).limit(1).first }
   scope :most_expensive_with_vat, -> { order("price_with_vat DESC").limit(1).first }
 
+  ### Callbacks
+  after_save :update_parent, if: :has_parent?
+
   def to_s
     puts "Product NAME: #{name} PRICE: #{price_with_currency}"
   end
@@ -43,12 +46,16 @@ class Product < ActiveRecord::Base
   end
 
   def output_vat= vat
+    # avoid setting input vat if it's a bundle
+    return if self.products.count > 0
     super(vat)
     self.adjust_price_with_vat
     vat
   end
 
   def input_vat= vat
+    # avoid setting input vat if it's a bundle
+    return if self.products.count > 0
     super(vat)
     self.adjust_price_with_vat
     vat
@@ -110,9 +117,24 @@ class Product < ActiveRecord::Base
     self.print_by_price_ordering :most_expensive
   end
 
+  def has_parent?
+    self.parent_id.present?
+  end
+
+  # Update all fields which depend on children fields
+  # to be calculated. It's ran by the child's after_save callback
+  def update_children_composition
+    self.update price: Product.prices_sum(self.products)
+  end
+
   protected
   def adjust_price_with_vat
-    self.price_with_vat = ((1 + output_vat/100)*price - input_vat).round(2)
+    self.price_with_vat =
+      if self.products.count == 0
+        ((1 + output_vat/100)*price - input_vat).round(2)
+      else
+        Product.prices_sum_with_vat products
+      end
   end
 
   def has_proper_vat
@@ -123,6 +145,10 @@ class Product < ActiveRecord::Base
 
   def has_other_parent
     errors.add(:parent_id, "parent id cannot be same as child's.") if self.parent_id.present? && self.parent_id == self.id
+  end
+
+  def update_parent
+    self.parent.update_children_composition
   end
 
 end
